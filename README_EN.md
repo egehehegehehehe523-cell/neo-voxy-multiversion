@@ -58,6 +58,19 @@ Integrations activate only when the corresponding mod is installed. The version 
 
 ### GemRender 0.1.20 / Golem Core 1.0.4 on Minecraft 1.21.1
 
+**November 8 follow-up (03:10 game log):** The initiating failure is now proven,
+not inferred. `MDICSectionRenderer.<init>` called `ShaderLoader.parse("voxy:lod/gl46/quads3.vert")`
+directly, bypassing the first `Shader.Builder.add` compatibility guard. GemRender's
+`LightShaders.replaceOne` then threw `IllegalStateException: ... has 0 of /vec4 pos = MVP.../`.
+The subsequent `Voxy LoadException`, world disconnect, Minecraft player-null errors,
+and Voxy World Gen V2 handshake exception were downstream effects. The MDIC
+renderer now calls `parseForCompiler` for both affected shaders, including its
+shader-pack/pipeline patch path; the other culling shaders still use normal
+source hooks. This revision has been source-reviewed but not yet compiled
+or tested in-game.
+
+
+
 Compatibility safeguard for [upstream issue #57](https://github.com/NHblock-Johnsnow/neo-voxy-multiversion/issues/57):
 
 GemRender's optional Voxy lighting mixin rewrites the GLSL returned by
@@ -77,14 +90,12 @@ crash-prevention fallback rather than a full dynamic-lighting port:
 compatibility fallback.** No changes are made to Voxy's internal cache,
 render distance, memory limits, or ingestion queue.
 
-The issue's three crash reports all terminate in vanilla code after the
-client player has already become null (two in MultiPlayerGameMode, one in
-GameRenderer). They show shader packs off and do not contain the first
-exception that caused the world to be discarded. Therefore the source
-mismatch above is independently verified, but the **complete root cause
-of those three crashes is not yet proven**. Test with GemRender/Golem Core
-in a fresh world and share `logs/latest.log` if it still disconnects; that
-log preserves preceding renderer-initialization errors.
+The three originally uploaded crash reports ended after the player was
+cleared and did not preserve the initiating error. The follow-up
+`latest(20261108-031025).log` does establish the shader rewrite exception
+as the cause for that test. Build the current branch, test a fresh
+world with GemRender/Golem Core, and capture `logs/latest.log` again if
+a different error appears.
 
 ## Building
 
