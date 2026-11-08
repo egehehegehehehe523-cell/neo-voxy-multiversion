@@ -122,7 +122,7 @@ public class MDICSectionRenderer extends AbstractSectionRenderer<MDICViewport, B
             this.fluidDatumY = level == null ? -1.0e9f : level.getSeaLevel() - (7.0f / 64.0f);
 
             // 管线可以在 shader 构建阶段注入 TAA、雾效和光影兼容代码。
-            String vertex = ShaderLoader.parse("voxy:lod/gl46/quads3.vert");
+            String vertex = ShaderLoader.parseForCompiler("voxy:lod/gl46/quads3.vert");
             String taa = pipeline.taaFunction("taaShift");
             if (taa != null) {
                 vertex += "\n" + taa;
@@ -137,7 +137,7 @@ public class MDICSectionRenderer extends AbstractSectionRenderer<MDICViewport, B
             // 方向光照在顶点阶段处理，保持模型颜色和 LOD 光照采样一致。
             addDirectionalFaceTint(builder, Minecraft.getInstance().level);
 
-            String frag = ShaderLoader.parse("voxy:lod/gl46/quads.frag");
+            String frag = ShaderLoader.parseForCompiler("voxy:lod/gl46/quads.frag");
 
             String opaqueFrag = pipeline.patchOpaqueShader(this, frag);
             opaqueFrag = opaqueFrag == null ? frag : opaqueFrag;

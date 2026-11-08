@@ -130,7 +130,10 @@ public class Shader extends TrackedObject {
         }
 
         public Builder<T> add(ShaderType type, String id) {
-            this.addSource(type, ShaderLoader.parse(id));
+            // Core GLSL 0.5.0 no longer has the source anchors expected by
+            // GemRender's 1.21.1 Voxy shader injection. The loader bypasses
+            // that hook only for the affected Voxy terrain shader pair.
+            this.addSource(type, ShaderLoader.parseForCompiler(id));
             return this;
         }
 
