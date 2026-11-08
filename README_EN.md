@@ -56,6 +56,36 @@ Integrations activate only when the corresponding mod is installed. The version 
 | [框架方块 / FramedBlocks](https://www.curseforge.com/minecraft/mc-mods/framedblocks)<br>MC 1.21.1 + FramedBlocks 10.6.1 | ✅ | LOD framed blocks and camouflage materials |
 | [小方块 / LittleTiles](https://www.curseforge.com/minecraft/mc-mods/littletiles)<br>MC 1.21.1 + LittleTiles 1.6.0-pre226 | 🧪 | Experimental functionality only; poor performance |
 
+### GemRender 0.1.20 / Golem Core 1.0.4 on Minecraft 1.21.1
+
+Compatibility safeguard for [upstream issue #57](https://github.com/NHblock-Johnsnow/neo-voxy-multiversion/issues/57):
+
+GemRender's optional Voxy lighting mixin rewrites the GLSL returned by
+`ShaderLoader.parse` for `quads3.vert` and `quads.frag`. That patch expects the
+older `vec4 pos = MVP * vec4(point, 1.0f);` statement, but Neo Voxy 0.5.0
+uses `applyWorldCurvature(getQuadCornerPoint(...))` instead. The old patch
+also expects location 2 for its varying and the upper bits of `interData.w`
+for its light ID; Neo Voxy uses those for boundary distance and leaf-hash data.
+Applying the old patch unchanged can fail GLSL source replacement, shader
+compilation, or rendering.
+
+When GemRender is installed, **only these two Voxy 0.5.0 GLSL sources** are
+loaded without GemRender's older source-rewrite hook. GemRender itself,
+Golem Core, NTM, and every other Voxy shader remain enabled. This is a
+crash-prevention fallback rather than a full dynamic-lighting port:
+**GemRender's lighting on distant Voxy LOD terrain is not provided by this
+compatibility fallback.** No changes are made to Voxy's internal cache,
+render distance, memory limits, or ingestion queue.
+
+The issue's three crash reports all terminate in vanilla code after the
+client player has already become null (two in MultiPlayerGameMode, one in
+GameRenderer). They show shader packs off and do not contain the first
+exception that caused the world to be discarded. Therefore the source
+mismatch above is independently verified, but the **complete root cause
+of those three crashes is not yet proven**. Test with GemRender/Golem Core
+in a fresh world and share `logs/latest.log` if it still disconnects; that
+log preserves preceding renderer-initialization errors.
+
 ## Building
 
 Build individual editions on Windows:
